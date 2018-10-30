@@ -47,9 +47,9 @@ services:
       - .env
     # environment overrides env_files vars
     environment:
-      - PORT: "8080"
-      - REDIS_HOST: ${COMPOSE_PROJECT_NAME:?err}_redis
-        REDIS_PORT: "6379"
+      - PORT=8080
+      - REDIS_HOST=${COMPOSE_PROJECT_NAME:?err}_redis
+      - REDIS_PORT=6379
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 30s
