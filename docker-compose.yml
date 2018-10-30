@@ -1,0 +1,86 @@
+version: '2.4' # Cant use 3+ because it does not support resource-limits without swarm-mode: https://github.com/docker/compose/issues/4513
+
+services:
+  node:
+    mem_limit: ${SHIPY_STACK_SERVICE_1_MEMORY_LIMIT:-1000000000}
+    depends_on:
+      - redis
+    build:
+      context: ./
+      dockerfile: Dockerfile.node
+      args:
+        VERSION: ${SHIPY_STACK_SERVICE_1_VERSION:-latest}
+    restart: always
+    expose:
+      - "8080"
+    labels:
+      # shipy labels must be present on all services
+      # shipy.stack.id must be equal the name of the repository
+      - "shipy.stack.id=${COMPOSE_PROJECT_NAME:?err}"
+      - "shipy.stack.type=${SHIPY_STACK_TYPE:?err}"
+      - "shipy.stack.name=${SHIPY_STACK_NAME:?err}"
+      - "shipy.stack.domains=${SHIPY_STACK_DOMAINS:?err}"
+      - "shipy.stack.updated=${SHIPY_STACK_UPDATED:?err}"
+      - "shipy.stack.json=${SHIPY_STACK_JSON:?err}"
+      - "shipy.stack.service.number=1"
+      - "shipy.stack.service.name=node"
+      - "shipy.stack.service.version=${SHIPY_STACK_SERVICE_1_VERSION:-latest}"
+      # https://docs.traefik.io/configuration/backends/docker/
+      - "traefik.enable=true"
+      - "traefik.backend=${COMPOSE_PROJECT_NAME:?err}_node"
+      - "traefik.backend.loadbalancer.stickiness=true"
+      - "traefik.docker.network=reverseproxy"
+      - "traefik.${COMPOSE_PROJECT_NAME:?err}_node.frontend.passHostHeader=true"
+      - "traefik.${COMPOSE_PROJECT_NAME:?err}_node.port=8080"
+      - "traefik.${COMPOSE_PROJECT_NAME:?err}_node.frontend.rule=Host:${SHIPY_STACK_DOMAINS:?err}"
+    networks:
+      reverseproxy:
+        aliases:
+         # alias with pattern PROJECTNAME_SERVICENAME must be present on all networks
+         - ${COMPOSE_PROJECT_NAME:?err}_node
+      redis:
+        aliases:
+         # alias with pattern PROJECTNAME_SERVICENAME must be present on all networks
+         - ${COMPOSE_PROJECT_NAME:?err}_node
+    env_file:
+      - .env
+    # environment overrides env_files vars
+    environment:
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+  redis:
+    image: redis:${SHIPY_STACK_SERVICE_2_VERSION:-latest}
+    mem_limit: ${SHIPY_STACK_SERVICE_2_MEMORY_LIMIT:-1000000000}
+    restart: always
+    expose:
+      - "6379"
+    env_file:
+      - .env
+    labels:
+      # shipy labels must be present on all services
+      # shipy.stack.id must be equal the name of the repository
+      - "shipy.stack.id=${COMPOSE_PROJECT_NAME:?err}"
+      - "shipy.stack.type=${SHIPY_STACK_TYPE:?err}"
+      - "shipy.stack.name=${SHIPY_STACK_NAME:?err}"
+      - "shipy.stack.domains=${SHIPY_STACK_DOMAINS:?err}"
+      - "shipy.stack.updated=${SHIPY_STACK_UPDATED:?err}"
+      - "shipy.stack.json=${SHIPY_STACK_JSON:?err}"
+      - "shipy.stack.service.number=2"
+      - "shipy.stack.service.name=redis"
+      - "shipy.stack.service.version=${SHIPY_STACK_SERVICE_2_VERSION:-latest}"
+    networks:
+      redis:
+        aliases:
+         # alias with pattern PROJECTNAME_SERVICENAME must be present on all networks
+         - ${COMPOSE_PROJECT_NAME:?err}_redis
+
+networks:
+  redis:
+  reverseproxy:
+    external: true
+    name: reverseproxy
