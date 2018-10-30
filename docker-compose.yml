@@ -4,14 +4,15 @@ services:
   node:
     mem_limit: ${SHIPY_STACK_SERVICE_1_MEMORY_LIMIT:-1000000000}
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     build:
       context: ./
       dockerfile: Dockerfile.node
       args:
         VERSION: ${SHIPY_STACK_SERVICE_1_VERSION:-latest}
         NODE_ENV: ${NODE_ENV:-production}
-    restart: always
+    restart: unless-stopped
     expose:
       - "8080"
     labels:
@@ -59,7 +60,7 @@ services:
   redis:
     image: redis:${SHIPY_STACK_SERVICE_2_VERSION:-latest}
     mem_limit: ${SHIPY_STACK_SERVICE_2_MEMORY_LIMIT:-1000000000}
-    restart: always
+    restart: unless-stopped
     expose:
       - "6379"
     env_file:
