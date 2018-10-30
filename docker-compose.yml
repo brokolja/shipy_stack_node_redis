@@ -10,6 +10,7 @@ services:
       dockerfile: Dockerfile.node
       args:
         VERSION: ${SHIPY_STACK_SERVICE_1_VERSION:-latest}
+        NODE_ENV: ${NODE_ENV:-production}
     restart: always
     expose:
       - "8080"
@@ -49,7 +50,7 @@ services:
       - PORT=8080
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 10s
+      interval: 30s
       timeout: 30s
       retries: 3
 
@@ -78,6 +79,11 @@ services:
         aliases:
          # alias with pattern PROJECTNAME_SERVICENAME must be present on all networks
          - ${COMPOSE_PROJECT_NAME:?err}_redis
+    healthcheck:
+        test: ["CMD", "redis-cli","ping"]
+        interval: 30s
+        timeout: 30s
+        retries: 3
 
 networks:
   redis:
