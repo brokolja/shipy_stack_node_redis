@@ -95,3 +95,6 @@ networks:
   reverseproxy:
     external: true
     name: reverseproxy
+  database:
+    external: true
+    name: database
