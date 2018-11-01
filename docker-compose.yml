@@ -44,6 +44,10 @@ services:
         aliases:
          # alias with pattern PROJECTNAME_SERVICENAME must be present on all networks
          - ${COMPOSE_PROJECT_NAME:?err}_node
+      database:
+        aliases:
+         # alias with pattern PROJECTNAME_SERVICENAME must be present on all networks
+         - ${COMPOSE_PROJECT_NAME:?err}_node
     env_file:
       - .env
     # environment overrides env_files vars
